@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: guess-my-word
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.0.0
+      - key: VITE_SERVER_URL
+        value: https://guess-my-word.onrender.com # Change this if you rename the service

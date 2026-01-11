@@ -115,13 +115,26 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onProvideAnswer, onMak
 
         {/* Messages Area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
-          {(gameState.currentTurn.history || []).length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50 space-y-4">
-              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-3xl">💬</div>
-              <p>No questions yet. Start the investigation!</p>
-            </div>
-          ) : (
-            (gameState.currentTurn.history || []).map((item, idx) => {
+          {(() => {
+            const history = (gameState.currentTurn.history && gameState.currentTurn.history.length > 0)
+              ? gameState.currentTurn.history
+              : gameState.currentTurn.questions.map(q => ({
+                type: 'question' as const,
+                content: q.question,
+                outcome: q.answer,
+                timestamp: 0
+              }));
+
+            if (history.length === 0) {
+              return (
+                <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50 space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-3xl">💬</div>
+                  <p>No questions yet. Start the investigation!</p>
+                </div>
+              );
+            }
+
+            return history.map((item, idx) => {
               if (item.type === 'question') {
                 return (
                   <div key={idx} className="space-y-2 animate-slide-up">
@@ -150,9 +163,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onProvideAnswer, onMak
                         <span className={`text-[10px] font-bold uppercase tracking-widest ${isCorrect ? 'text-game-success' : 'text-game-error'}`}>
                           {isGuesser ? 'YOU GUESSED' : `${guesser.name} GUESSED`}
                         </span>
-                        <span className="text-[10px] text-slate-500 opacity-60">
-                          {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                        {item.timestamp > 0 && (
+                          <span className="text-[10px] text-slate-500 opacity-60">
+                            {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xl font-bold text-white text-center py-1">"{item.content}"</p>
                       {isCorrect ? (
@@ -164,8 +179,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onProvideAnswer, onMak
                   </div>
                 );
               }
-            })
-          )}
+            });
+          })()}
 
           {/* Pending Question Indicator */}
           {pendingQuestion && !isPicker && (

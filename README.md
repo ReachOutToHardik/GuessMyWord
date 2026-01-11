@@ -28,8 +28,8 @@
     npm install
     ```
 
-### Running the Game
-To start both the Backend Server (for multiplayer logic) and the Frontend Client simultaneously:
+### Running the Game Locally
+To start the game in development mode:
 
 ```bash
 npm run dev:all
@@ -37,6 +37,13 @@ npm run dev:all
 
 -   **Frontend**: `http://localhost:5173`
 -   **Backend**: `http://localhost:3001`
+
+### 🌐 Deployment
+This project is configured for one-click deployment to **Render** using the included `render.yaml`.
+
+1.  Push your code to GitHub.
+2.  Connect your repo to Render.
+3.  Render will automatically detect the blueprint and set up your web service!
 
 > **Note**: Open the frontend in two different browser tabs (or devices) to simulate two players!
 
