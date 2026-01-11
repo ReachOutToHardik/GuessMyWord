@@ -25,7 +25,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     );
 
     useEffect(() => {
-        const serverUrl = (import.meta as any).env?.VITE_SERVER_URL || 'http://localhost:3001';
+        // Build the server URL: Use env var if provided, otherwise default to current origin in prod or localhost in dev
+        const isProd = (import.meta as any).env?.PROD;
+        const serverUrl = (import.meta as any).env?.VITE_SERVER_URL ||
+            (isProd ? window.location.origin : 'http://localhost:3001');
 
         setConnectionStatus(ConnectionStatus.CONNECTING);
         const newSocket = io(serverUrl);
