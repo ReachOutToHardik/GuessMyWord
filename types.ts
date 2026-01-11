@@ -15,12 +15,21 @@ export interface PlayerStats {
   totalGuesses: number;
 }
 
+
+export interface GameEvent {
+  type: 'question' | 'guess';
+  content: string;
+  outcome?: 'yes' | 'no' | 'correct' | 'wrong';
+  timestamp: number;
+}
+
 export interface TurnData {
   pickerIndex: number;
   guesserIndex: number;
   selectedWord: string;
   questions: { question: string; answer: 'yes' | 'no' }[];
   guesses: string[];
+  history: GameEvent[];
   isSolved: boolean;
 }
 

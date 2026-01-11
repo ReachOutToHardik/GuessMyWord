@@ -138,6 +138,13 @@ io.on('connection', (socket) => {
 
         if (room.gameState) {
             room.gameState.currentTurn.questions.push({ question, answer });
+            if (!room.gameState.currentTurn.history) room.gameState.currentTurn.history = [];
+            room.gameState.currentTurn.history.push({
+                type: 'question',
+                content: question,
+                outcome: answer,
+                timestamp: Date.now()
+            });
 
             const guesserIndex = room.gameState.currentTurn.guesserIndex;
             room.gameState.players[guesserIndex].totalQuestionsAsked += 1;
@@ -154,6 +161,14 @@ io.on('connection', (socket) => {
         if (room.gameState) {
             const isCorrect = guess.toLowerCase().trim() === room.gameState.currentTurn.selectedWord.toLowerCase().trim();
             const updatedGuesses = [...room.gameState.currentTurn.guesses, guess];
+
+            if (!room.gameState.currentTurn.history) room.gameState.currentTurn.history = [];
+            room.gameState.currentTurn.history.push({
+                type: 'guess',
+                content: guess,
+                outcome: isCorrect ? 'correct' : 'wrong',
+                timestamp: Date.now()
+            });
 
             const guesserIndex = room.gameState.currentTurn.guesserIndex;
             room.gameState.players[guesserIndex].totalGuesses += 1;
@@ -194,6 +209,7 @@ io.on('connection', (socket) => {
                 selectedWord: '',
                 questions: [],
                 guesses: [],
+                history: [],
                 isSolved: false
             };
         }

@@ -98,6 +98,7 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onGameStart }) => {
                 selectedWord: '',
                 questions: [],
                 guesses: [],
+                history: [],
                 isSolved: false
             },
             roomCode: currentRoom.code
@@ -108,19 +109,16 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onGameStart }) => {
 
     if (connectionStatus !== ConnectionStatus.CONNECTED) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-4">
-                <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-                    <div className="animate-pulse">
-                        <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto mb-4"></div>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                            {connectionStatus === ConnectionStatus.CONNECTING ? 'Connecting...' : 'Connection Error'}
-                        </h2>
-                        <p className="text-gray-600">
-                            {connectionStatus === ConnectionStatus.CONNECTING
-                                ? 'Please wait while we connect to the server'
-                                : 'Unable to connect to the server. Please check if the server is running.'}
-                        </p>
+            <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-game-bg text-white">
+                <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-xl p-8 rounded-2xl max-w-md w-full text-center animate-float">
+                    <div className="w-20 h-20 bg-gradient-to-br from-game-primary to-game-secondary rounded-full mx-auto mb-6 shadow-2xl shadow-game-primary/30 flex items-center justify-center">
+                        <svg className="w-10 h-10 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
                     </div>
+                    <h2 className="text-2xl font-bold mb-2">Connecting...</h2>
+                    <p className="text-slate-400">Establishing secure link to game server</p>
                 </div>
             </div>
         );
@@ -131,182 +129,164 @@ const LobbyScreen: React.FC<LobbyScreenProps> = ({ onGameStart }) => {
         const isFull = currentRoom.players.length === 2;
 
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-purple-50 to-pink-50">
-                <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-                    <h1 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        Game Lobby
-                    </h1>
+            <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-game-bg relative overflow-hidden">
+                {/* Background blobs */}
+                <div className="absolute top-0 left-0 w-96 h-96 bg-game-primary/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 right-0 w-96 h-96 bg-game-secondary/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
 
-                    <div className="mb-6 p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
-                        <p className="text-sm text-gray-600 mb-1">Room Code</p>
-                        <p className="text-3xl font-bold text-center tracking-widest text-purple-600">
-                            {currentRoom.code}
-                        </p>
-                        <p className="text-xs text-gray-500 text-center mt-2">
-                            Share this code with your friend
-                        </p>
+                <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 z-10">
+                    {/* Left Panel: Room Info */}
+                    <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-xl p-8 rounded-3xl flex flex-col items-center justify-center text-center space-y-6">
+                        <div>
+                            <p className="text-slate-400 text-sm uppercase font-bold tracking-wider mb-2">Room Code</p>
+                            <div className="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-game-primary to-game-secondary tracking-widest">{currentRoom.code}</div>
+                        </div>
+                        <div className="bg-white/5 p-4 rounded-xl text-sm text-slate-300 max-w-xs">
+                            <p>Share this code with your friend to start playing!</p>
+                        </div>
                     </div>
 
-                    <div className="mb-6">
-                        <h2 className="text-lg font-semibold mb-3 text-gray-700">Players</h2>
-                        {currentRoom.players.map((player, index) => (
-                            <div
-                                key={player.id}
-                                className="flex items-center justify-between p-3 mb-2 bg-gray-50 rounded-lg"
-                            >
-                                <span className="font-medium text-gray-800">{player.name}</span>
-                                <span className="text-sm text-gray-500">
-                                    {player.isHost && '👑 Host'}
-                                    {player.id === socket?.id && ' (You)'}
-                                </span>
-                            </div>
-                        ))}
-                        {!isFull && (
-                            <div className="p-3 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                                <span className="text-gray-400">Waiting for player 2...</span>
-                            </div>
-                        )}
+                    {/* Right Panel: Players */}
+                    <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-xl p-8 rounded-3xl flex flex-col">
+                        <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+                            <span className="w-8 h-8 rounded-lg bg-game-primary/20 text-game-primary flex items-center justify-center mr-3">👥</span>
+                            Players ({currentRoom.players.length}/2)
+                        </h2>
+
+                        <div className="space-y-4 flex-1">
+                            {currentRoom.players.map((player) => (
+                                <div key={player.id} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-game-primary to-game-secondary flex items-center justify-center text-white font-bold">
+                                            {player.name[0].toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-white">{player.name}</p>
+                                            <p className="text-xs text-slate-400">{player.isHost ? 'Host' : 'Player'}</p>
+                                        </div>
+                                    </div>
+                                    {player.id === socket?.id && <span className="text-xs bg-game-primary/20 text-game-primary px-2 py-1 rounded">YOU</span>}
+                                </div>
+                            ))}
+
+                            {!isFull && (
+                                <div className="border-2 border-dashed border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-slate-500 animate-pulse-slow">
+                                    <p>Waiting for Player 2...</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-white/5">
+                            {isHost ? (
+                                <button
+                                    onClick={startGame}
+                                    disabled={!isFull}
+                                    className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${isFull ? 'bg-gradient-to-r from-game-primary to-game-secondary text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-game-primary/25 hover:scale-[1.02] active:scale-95 transition-all duration-300' : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                        }`}
+                                >
+                                    {isFull ? 'Start Game' : 'Waiting for Player...'}
+                                </button>
+                            ) : (
+                                <div className="text-center p-4 bg-slate-800/50 rounded-xl">
+                                    <p className="text-slate-400 animate-pulse">Waiting for host to start...</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    {isHost && (
-                        <button
-                            onClick={startGame}
-                            disabled={!isFull}
-                            className={`w-full py-3 px-6 rounded-lg font-semibold text-white transition-all ${isFull
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl'
-                                    : 'bg-gray-300 cursor-not-allowed'
-                                }`}
-                        >
-                            {isFull ? 'Start Game' : 'Waiting for Players...'}
-                        </button>
-                    )}
-
-                    {!isHost && (
-                        <div className="text-center text-gray-600">
-                            <p className="text-sm">Waiting for host to start the game...</p>
-                        </div>
-                    )}
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-purple-50 to-pink-50">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-                <h1 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    Mind Reader Duo
-                </h1>
-                <p className="text-center text-gray-600 mb-8">Multiplayer Mode</p>
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-game-bg relative overflow-hidden">
+            {/* Background Decor */}
+            <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-game-primary/20 rounded-full blur-[100px] animate-pulse-slow"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-game-secondary/20 rounded-full blur-[100px] animate-pulse-slow"></div>
 
-                {mode === 'select' && (
-                    <div className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Your Name
-                            </label>
-                            <input
-                                type="text"
-                                value={playerName}
-                                onChange={(e) => setPlayerName(e.target.value)}
-                                placeholder="Enter your name"
-                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors"
-                            />
-                        </div>
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-xl p-8 md:p-12 rounded-3xl max-w-5xl w-full z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                {/* Intro Side */}
+                <div className="text-center md:text-left space-y-6">
+                    <div className="inline-block px-4 py-1.5 rounded-full bg-game-primary/20 text-game-primary text-sm font-bold border border-game-primary/20">
+                        Multiplayer Beta
+                    </div>
+                    <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
+                        Guess<br />
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-game-primary to-game-secondary">My</span><br />
+                        Word
+                    </h1>
+                    <p className="text-slate-400 text-lg max-w-md mx-auto md:mx-0">
+                        Challenge your friends in this real-time word guessing game. Connect securely and play instantly!
+                    </p>
+                </div>
 
-                        {error && (
-                            <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                                {error}
-                            </div>
+                {/* Action Side */}
+                <div className="bg-slate-900/50 p-6 md:p-8 rounded-2xl border border-white/5 shadow-inner">
+                    <h2 className="text-xl font-bold text-white mb-6">Get Started</h2>
+
+                    <div className="space-y-4 mb-8">
+                        <label className="block text-sm font-medium text-slate-400">Your Nickname</label>
+                        <input
+                            type="text"
+                            value={playerName}
+                            onChange={(e) => setPlayerName(e.target.value)}
+                            placeholder="e.g. WordMaster"
+                            className="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-game-primary/50 text-white placeholder-slate-500 transition-all w-full"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                        {mode === 'select' && (
+                            <>
+                                <button
+                                    onClick={() => {
+                                        if (playerName.trim()) {
+                                            setMode('create');
+                                            createRoom();
+                                        } else {
+                                            setError('Enter a name first!');
+                                        }
+                                    }}
+                                    className="bg-gradient-to-r from-game-primary to-game-secondary text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-game-primary/25 hover:scale-[1.02] active:scale-95 transition-all duration-300"
+                                >
+                                    Create New Room
+                                </button>
+                                <button
+                                    onClick={() => setMode('join')}
+                                    className="bg-slate-800 text-slate-200 font-bold py-3 px-6 rounded-xl border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all duration-300"
+                                >
+                                    Join Existing Room
+                                </button>
+                            </>
                         )}
 
-                        <div className="space-y-3">
-                            <button
-                                onClick={() => {
-                                    if (playerName.trim()) {
-                                        setMode('create');
-                                        createRoom();
-                                    } else {
-                                        setError('Please enter your name');
-                                    }
-                                }}
-                                className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl"
-                            >
-                                Create New Room
-                            </button>
-
-                            <button
-                                onClick={() => setMode('join')}
-                                className="w-full py-3 px-6 bg-white text-purple-600 border-2 border-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-all"
-                            >
-                                Join Existing Room
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {mode === 'join' && (
-                    <div className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Your Name
-                            </label>
-                            <input
-                                type="text"
-                                value={playerName}
-                                onChange={(e) => setPlayerName(e.target.value)}
-                                placeholder="Enter your name"
-                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Room Code
-                            </label>
-                            <input
-                                type="text"
-                                value={roomCode}
-                                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                                placeholder="Enter 6-character code"
-                                maxLength={6}
-                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors text-center text-2xl tracking-widest font-bold"
-                            />
-                        </div>
-
-                        {error && (
-                            <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                                {error}
+                        {mode === 'join' && (
+                            <div className="space-y-4 animate-slide-up">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400 mb-2">Room Code</label>
+                                    <input
+                                        type="text"
+                                        value={roomCode}
+                                        onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                                        placeholder="XYZ123"
+                                        maxLength={6}
+                                        className="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-game-primary/50 text-white placeholder-slate-500 transition-all w-full text-center text-2xl tracking-widest uppercase font-mono"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={() => setMode('select')} className="bg-slate-800 text-slate-200 font-bold py-3 px-6 rounded-xl border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all duration-300">Back</button>
+                                    <button onClick={joinRoom} className="bg-gradient-to-r from-game-primary to-game-secondary text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-game-primary/25 hover:scale-[1.02] active:scale-95 transition-all duration-300">Join</button>
+                                </div>
                             </div>
                         )}
-
-                        <div className="space-y-3">
-                            <button
-                                onClick={joinRoom}
-                                className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl"
-                            >
-                                Join Room
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    setMode('select');
-                                    setRoomCode('');
-                                    setError('');
-                                }}
-                                className="w-full py-3 px-6 bg-white text-gray-600 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-all"
-                            >
-                                Back
-                            </button>
-                        </div>
                     </div>
-                )}
+
+                    {error && (
+                        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-lg text-center animate-shake">
+                            {error}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

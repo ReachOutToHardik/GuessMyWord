@@ -1,0 +1,28 @@
+/* Custom Utilities are now inlined in components for CDN compatibility */
+
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.5);
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+    .mobile-safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+}

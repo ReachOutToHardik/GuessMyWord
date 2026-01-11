@@ -49,181 +49,207 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onProvideAnswer, onMak
   };
 
   return (
-    <div className="w-full max-w-4xl space-y-6 animate-in slide-in-from-bottom duration-500">
-      <div className="flex justify-between items-center mb-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
-        <div className="flex items-center space-x-3">
-          <span className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm font-bold">Round {gameState.currentRound}/{gameState.maxRounds}</span>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Turn</p>
-          <p className="text-slate-200 font-semibold">{guesser.name} guessing from {picker.name}</p>
-        </div>
-      </div>
+    <div className="w-full max-w-6xl mx-auto h-[calc(100vh-100px)] flex flex-col md:flex-row gap-6 animate-slide-up">
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: History */}
-        <div className="lg:col-span-2 flex flex-col h-[500px] card-glass rounded-3xl overflow-hidden">
-          <div className="p-4 bg-slate-800/50 border-b border-slate-700 flex justify-between items-center">
-            <h3 className="font-bold text-slate-300">Conversation History</h3>
-            <span className="text-xs text-slate-500 font-mono">{gameState.currentTurn.questions.length} Questions Asked</span>
+      {/* Left Panel: Game Info & Status (Desktop) / Top Bar (Mobile) */}
+      <div className="md:w-1/3 flex flex-col gap-4">
+        {/* Round Info Card */}
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-xl p-6 rounded-2xl flex justify-between items-center bg-game-surface">
+          <div>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Round</p>
+            <p className="text-2xl font-bold text-white">{gameState.currentRound} <span className="text-slate-500 text-lg">/ {gameState.maxRounds}</span></p>
           </div>
-
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth">
-            {gameState.currentTurn.questions.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center opacity-30">
-                <svg className="w-16 h-16 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                <p>No questions yet. Start asking!</p>
-              </div>
-            ) : (
-              gameState.currentTurn.questions.map((q, idx) => (
-                <div key={idx} className="space-y-2 animate-in fade-in slide-in-from-left duration-300">
-                  <div className="flex justify-end">
-                    <div className="bg-blue-600/20 text-blue-100 px-4 py-2 rounded-2xl rounded-tr-none max-w-[80%] border border-blue-500/30">
-                      <p className="text-xs font-bold text-blue-400 mb-1">{guesser.name}</p>
-                      <p>{q.question}</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-start">
-                    <div className="bg-slate-700/50 text-slate-100 px-4 py-2 rounded-2xl rounded-tl-none max-w-[80%] border border-slate-600">
-                      <p className="text-xs font-bold text-slate-400 mb-1">{picker.name}</p>
-                      <p className={`font-bold uppercase ${q.answer === 'yes' ? 'text-green-400' : 'text-red-400'}`}>
-                        {q.answer}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
+          <div className="text-right">
+            <div className="inline-block px-3 py-1 bg-game-primary/20 rounded-lg text-game-primary text-xs font-bold mb-1">
+              {isPicker ? 'YOU ARE PICKER' : 'YOU ARE GUESSER'}
+            </div>
+            <p className="text-slate-300 text-sm">
+              vs <span className="font-bold text-white">{isPicker ? guesser.name : picker.name}</span>
+            </p>
           </div>
+        </div>
 
-          {/* Question Input - Only show for guesser */}
-          <div className="p-4 bg-slate-800/50 border-t border-slate-700">
-            {isGuesser && !pendingQuestion && (
-              <div className="flex space-x-2">
+        {/* Secret Word Card (Picker Only) */}
+        {isPicker && (
+          <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-xl p-6 rounded-2xl border-l-4 border-game-accent animate-pulse-slow">
+            <p className="text-game-accent text-xs font-bold uppercase tracking-wider mb-2">SECRET WORD</p>
+            <p className="text-3xl font-bold text-white tracking-wide">{gameState.currentTurn.selectedWord}</p>
+            <p className="text-slate-400 text-xs mt-2">Shh! Don't tell {guesser.name}.</p>
+          </div>
+        )}
+
+        {/* Guessing Card (Guesser Only) - Desktop */}
+        {isGuesser && (
+          <div className="hidden md:block bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-xl p-6 rounded-2xl">
+            <h3 className="font-bold text-white mb-4 flex items-center">
+              <span className="mr-2">💡</span> Make a Guess
+            </h3>
+            <div className="space-y-4">
+              <div className="relative">
                 <input
                   type="text"
-                  placeholder={`Ask ${picker.name} something...`}
-                  className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={currentQuestionInput}
-                  onChange={(e) => setCurrentQuestionInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
-                />
-                <button
-                  onClick={handleAsk}
-                  className="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-xl font-bold transition-all shadow-md active:scale-95"
-                >
-                  Ask
-                </button>
-              </div>
-            )}
-
-            {isGuesser && pendingQuestion && (
-              <div className="animate-pulse flex flex-col items-center space-y-3 py-2">
-                <p className="text-sm font-bold text-blue-400">Waiting for {picker.name}'s answer...</p>
-              </div>
-            )}
-
-            {isPicker && pendingQuestion && (
-              <div className="flex flex-col items-center space-y-3 py-2">
-                <p className="text-sm font-bold text-green-400">{guesser.name} asked: "{pendingQuestion}"</p>
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => handleAnswer('yes')}
-                    className="bg-green-600 hover:bg-green-500 px-8 py-2 rounded-xl font-bold shadow-lg transition-all active:scale-95"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    onClick={() => handleAnswer('no')}
-                    className="bg-red-600 hover:bg-red-500 px-8 py-2 rounded-xl font-bold shadow-lg transition-all active:scale-95"
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {isPicker && !pendingQuestion && (
-              <div className="text-center text-slate-400 text-sm py-2">
-                Waiting for {guesser.name} to ask a question...
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: Guessing & Info */}
-        <div className="space-y-6">
-          {/* Guess Input - Only show for guesser */}
-          {isGuesser && (
-            <div className="card-glass p-6 rounded-3xl shadow-xl">
-              <h3 className="text-xl font-bold text-slate-200 mb-4 flex items-center">
-                <span className="mr-2">💡</span> Guess the Word
-              </h3>
-              <p className="text-sm text-slate-400 mb-4">
-                Careful! You only get 2 tries per round.
-                <span className="block mt-1 font-bold text-blue-400">Tries left: {2 - gameState.currentTurn.guesses.length}</span>
-              </p>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Type your guess..."
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   value={currentGuessInput}
                   onChange={(e) => setCurrentGuessInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleGuess()}
+                  placeholder="Is the word..."
+                  className="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-game-primary/50 text-white placeholder-slate-500 transition-all w-full"
                 />
-                <button
-                  onClick={handleGuess}
-                  className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95"
-                >
-                  Submit Guess
+              </div>
+              <button onClick={handleGuess} className="bg-gradient-to-r from-game-primary to-game-secondary text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-game-primary/25 hover:scale-[1.02] active:scale-95 transition-all duration-300 w-full">Submit Guess</button>
+              <div className="flex justify-between text-sm text-slate-400 pt-2">
+                <span>Attempts remaining:</span>
+                <span className="font-bold text-white">{2 - gameState.currentTurn.guesses.length}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Right Panel: Chat/History */}
+      <div className="md:w-2/3 bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-xl rounded-2xl flex flex-col overflow-hidden relative">
+        {/* Header */}
+        <div className="p-4 border-b border-white/5 bg-slate-900/50 flex justify-between items-center">
+          <h3 className="font-bold text-slate-200">Investigation Log</h3>
+          <div className="text-xs text-slate-500">{gameState.currentTurn.questions.length} questions asked</div>
+        </div>
+
+        {/* Messages Area */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
+          {(gameState.currentTurn.history || []).length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50 space-y-4">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-3xl">💬</div>
+              <p>No questions yet. Start the investigation!</p>
+            </div>
+          ) : (
+            (gameState.currentTurn.history || []).map((item, idx) => {
+              if (item.type === 'question') {
+                return (
+                  <div key={idx} className="space-y-2 animate-slide-up">
+                    {/* Question */}
+                    <div className="flex justify-end">
+                      <div className="bg-game-primary/20 border border-game-primary/20 text-slate-200 px-5 py-3 rounded-2xl rounded-tr-sm max-w-[85%]">
+                        <p className="text-[10px] font-bold text-game-primary uppercase mb-1">{guesser.name}</p>
+                        <p>{item.content}</p>
+                      </div>
+                    </div>
+                    {/* Answer */}
+                    <div className="flex justify-start">
+                      <div className={`px-5 py-3 rounded-2xl rounded-tl-sm max-w-[85%] border ${item.outcome === 'yes' ? 'bg-game-success/20 border-game-success/20 text-white' : 'bg-game-error/20 border-game-error/20 text-white'}`}>
+                        <p className={`text-[10px] font-bold uppercase mb-1 ${item.outcome === 'yes' ? 'text-game-success' : 'text-game-error'}`}>{picker.name}</p>
+                        <p className="font-bold uppercase tracking-wide">{item.outcome}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              } else {
+                const isCorrect = item.outcome === 'correct';
+                return (
+                  <div key={idx} className="flex justify-center animate-slide-up py-4">
+                    <div className={`w-full max-w-[90%] p-4 rounded-xl border-l-4 ${isCorrect ? 'bg-game-success/10 border-game-success shadow-lg shadow-game-success/10' : 'bg-game-error/10 border-game-error'}`}>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isCorrect ? 'text-game-success' : 'text-game-error'}`}>
+                          {isGuesser ? 'YOU GUESSED' : `${guesser.name} GUESSED`}
+                        </span>
+                        <span className="text-[10px] text-slate-500 opacity-60">
+                          {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-xl font-bold text-white text-center py-1">"{item.content}"</p>
+                      {isCorrect ? (
+                        <p className="text-center text-sm font-bold text-game-success mt-2">🎉 CORRECT WORD!</p>
+                      ) : (
+                        <p className="text-center text-xs text-game-error mt-2">❌ Incorrect Guess</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+            })
+          )}
+
+          {/* Pending Question Indicator */}
+          {pendingQuestion && !isPicker && (
+            <div className="flex justify-end opacity-50">
+              <div className="bg-game-primary/10 border border-game-primary/10 text-slate-400 px-5 py-3 rounded-2xl rounded-tr-sm">
+                <p className="text-xs italic">Sending question...</p>
+              </div>
+            </div>
+          )}
+
+          <div className="h-4"></div> {/* Spacer */}
+        </div>
+
+        {/* Input Area (Sticky Bottom) */}
+        <div className="p-4 bg-slate-900/80 backdrop-blur-md border-t border-white/5">
+          {isGuesser && !pendingQuestion && (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={currentQuestionInput}
+                onChange={(e) => setCurrentQuestionInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
+                placeholder="Ask a Yes/No question..."
+                className="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-game-primary/50 text-white placeholder-slate-500 transition-all w-full shadow-lg"
+                autoFocus
+              />
+              <button onClick={handleAsk} className="bg-gradient-to-r from-game-primary to-game-secondary text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-game-primary/25 hover:scale-[1.02] active:scale-95 transition-all duration-300 aspect-square flex items-center justify-center p-0 w-12 rounded-xl">
+                ➤
+              </button>
+            </div>
+          )}
+
+          {isGuesser && pendingQuestion && (
+            <div className="text-center py-3 text-slate-400 animate-pulse">
+              Waiting for answer...
+            </div>
+          )}
+
+          {isPicker && pendingQuestion && (
+            <div className="space-y-3">
+              <div className="bg-slate-800 p-4 rounded-xl border border-white/10 mb-3">
+                <span className="text-xs text-game-primary font-bold uppercase block mb-1">Incoming Question</span>
+                <p className="text-lg font-medium text-white">"{pendingQuestion}"</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <button onClick={() => handleAnswer('yes')} className="bg-game-success hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-500/20 active:scale-95 transition-all">
+                  YES
+                </button>
+                <button onClick={() => handleAnswer('no')} className="bg-game-error hover:bg-red-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-red-500/20 active:scale-95 transition-all">
+                  NO
                 </button>
               </div>
-              {gameState.currentTurn.guesses.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-slate-700">
-                  <p className="text-xs font-bold text-slate-500 uppercase mb-2">Previous Guesses</p>
-                  <div className="flex flex-wrap gap-2">
-                    {gameState.currentTurn.guesses.map((g, i) => (
-                      <span key={i} className="bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-sm line-through">
-                        {g}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
-          {/* Secret word - Only show for picker */}
-          {isPicker && (
-            <div className="card-glass p-6 rounded-3xl border-blue-500/20">
-              <h4 className="font-bold text-blue-400 mb-2">Your Secret Word</h4>
-              <p className="text-xs text-slate-500 mb-3 italic">Don't let {guesser.name} see this!</p>
-              <div className="p-4 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl border-2 border-blue-500/30">
-                <span className="text-2xl font-bold text-blue-400">{gameState.currentTurn.selectedWord}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Info for guesser */}
-          {isGuesser && (
-            <div className="card-glass p-6 rounded-3xl border-purple-500/20">
-              <h4 className="font-bold text-purple-400 mb-2">How to Play</h4>
-              <ul className="text-sm text-slate-400 space-y-2">
-                <li>• Ask yes/no questions</li>
-                <li>• Use clues to narrow down</li>
-                <li>• Guess when you're ready</li>
-                <li>• You have 2 attempts!</li>
-              </ul>
+          {isPicker && !pendingQuestion && (
+            <div className="text-center py-3 text-slate-500 italic">
+              Waiting for question...
             </div>
           )}
         </div>
       </div>
+
+      {/* Mobile-only Guess Input (Bottom Sheet style) */}
+      {isGuesser && (
+        <div className="md:hidden mt-4">
+          <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-xl p-4 rounded-2xl">
+            <h4 className="text-sm font-bold text-slate-400 mb-2 uppercase">Have a guess?</h4>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={currentGuessInput}
+                onChange={(e) => setCurrentGuessInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleGuess()}
+                placeholder="Type secret word..."
+                className="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-game-primary/50 text-white placeholder-slate-500 transition-all w-full text-sm"
+              />
+              <button onClick={handleGuess} className="bg-slate-800 text-slate-200 font-bold py-3 px-6 rounded-xl border border-slate-700 hover:bg-slate-700 active:scale-95 transition-all duration-300 whitespace-nowrap px-4 bg-white/10 border-white/20">Guess</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default GameBoard;
-
