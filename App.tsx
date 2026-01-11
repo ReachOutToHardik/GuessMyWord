@@ -39,6 +39,7 @@ const GameContent: React.FC = () => {
 
     // Listen for game state updates from server
     socket.on('word_confirmed', ({ word }) => {
+      console.log('Word confirmed:', word);
       setGameState(prev => ({
         ...prev,
         currentTurn: { ...prev.currentTurn, selectedWord: word },
@@ -47,6 +48,7 @@ const GameContent: React.FC = () => {
     });
 
     socket.on('word_selected_notification', () => {
+      console.log('Word selected notification received');
       setGameState(prev => ({
         ...prev,
         phase: GamePhase.QUESTIONING
@@ -54,10 +56,12 @@ const GameContent: React.FC = () => {
     });
 
     socket.on('question_asked', ({ question }) => {
+      console.log('Question received from server:', question);
       setPendingQuestion(question);
     });
 
     socket.on('answer_provided', ({ question, answer, gameState: serverGameState }) => {
+      console.log('Answer provided:', answer, 'for question:', question);
       setPendingQuestion(''); // Clear pending question after answer
       if (serverGameState) {
         setGameState(prev => ({
@@ -114,6 +118,7 @@ const GameContent: React.FC = () => {
   };
 
   const askQuestion = (question: string) => {
+    console.log('Asking question:', question, 'Room:', currentRoomCode);
     socket?.emit('ask_question', { roomCode: currentRoomCode, question });
   };
 

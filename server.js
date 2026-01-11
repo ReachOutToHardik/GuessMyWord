@@ -125,8 +125,10 @@ io.on('connection', (socket) => {
         const room = rooms.get(roomCode);
         if (!room) return;
 
+        console.log(`Question asked in room ${roomCode}:`, question);
         // Broadcast to all players in the room
         io.to(roomCode).emit('question_asked', { question });
+        console.log(`Broadcasted question to room ${roomCode}`);
     });
 
     // Answer provided
